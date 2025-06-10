@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       COMPOSER_NO_INTERACTION: 1
+      PHP_CS_FIXER_IGNORE_ENV: 1
 
     steps:
       - name: Checkout code
