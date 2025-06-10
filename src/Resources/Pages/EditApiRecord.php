@@ -14,7 +14,7 @@ abstract class EditApiRecord extends EditRecord
      */
     public function mount(int|string $record): void
     {
-        if (!$this->record = $this->getModel()::get($record)) {
+        if (! $this->record = $this->getModel()::get($record)) {
             abort(404);
         }
 
@@ -27,7 +27,6 @@ abstract class EditApiRecord extends EditRecord
      */
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
-        // Try to use updateRecord method if it exists, otherwise fall back to save
         if (method_exists($record, 'updateRecord')) {
             $success = $record->updateRecord($data);
         } else {
@@ -35,7 +34,7 @@ abstract class EditApiRecord extends EditRecord
             $success = $record->save();
         }
 
-        if (!$success) {
+        if (! $success) {
             throw new \Exception('Failed to update record via API');
         }
 

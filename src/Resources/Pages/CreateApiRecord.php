@@ -16,7 +16,7 @@ abstract class CreateApiRecord extends CreateRecord
     {
         $record = $this->getModel()::create($data);
 
-        if (!$record) {
+        if (! $record) {
             throw new \Exception('Failed to create record via API');
         }
 

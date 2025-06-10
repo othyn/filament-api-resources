@@ -27,26 +27,26 @@ class UserResource extends Resource
 
     protected static ?string $navigationGroup = 'User Management';
 
-    public static function form(Form $form): Form
+    /**
+     * Get the navigation badge (total count).
+     */
+    public static function getNavigationBadge(): ?string
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('User Information')
-                    ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->required()
-                            ->maxLength(255),
+        try {
+            return (string) static::getModel()::getTotalCount();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 
-                        Forms\Components\TextInput::make('email')
-                            ->email()
-                            ->required()
-                            ->maxLength(255),
-
-                        Forms\Components\DateTimePicker::make('email_verified_at')
-                            ->label('Email Verified At'),
-                    ])
-                    ->columns(2),
-            ]);
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListUsers::route('/'),
+            'create' => Pages\CreateUser::route('/create'),
+            'view' => Pages\ViewUser::route('/{record}'),
+            'edit' => Pages\EditUser::route('/{record}/edit'),
+        ];
     }
 
     public static function table(Table $table): Table
@@ -69,7 +69,7 @@ class UserResource extends Resource
                 Tables\Columns\IconColumn::make('email_verified_at')
                     ->label('Verified')
                     ->boolean()
-                    ->getStateUsing(fn ($record) => !is_null($record->email_verified_at)),
+                    ->getStateUsing(fn ($record) => ! is_null($record->email_verified_at)),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -100,32 +100,25 @@ class UserResource extends Resource
             ->deferLoading();
     }
 
-    public static function getRelations(): array
+    public static function form(Form $form): Form
     {
-        return [
-            // Add relations here if your API supports them
-        ];
-    }
+        return $form
+            ->schema([
+                Forms\Components\Section::make('User Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
 
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'view' => Pages\ViewUser::route('/{record}'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
-        ];
-    }
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->maxLength(255),
 
-    /**
-     * Get the navigation badge (total count).
-     */
-    public static function getNavigationBadge(): ?string
-    {
-        try {
-            return (string) static::getModel()::getTotalCount();
-        } catch (\Exception $e) {
-            return null;
-        }
+                        Forms\Components\DateTimePicker::make('email_verified_at')
+                            ->label('Email Verified At'),
+                    ])
+                    ->columns(2),
+            ]);
     }
 }

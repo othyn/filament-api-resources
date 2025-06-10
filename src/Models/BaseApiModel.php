@@ -130,7 +130,7 @@ abstract class BaseApiModel extends Model
 
             // Handle single resource response (not paginated)
             // Check if response.data is a single object (not an array of objects)
-            if (isset($response['data']) && !isset($response['data']['data'])) {
+            if (isset($response['data']) && ! isset($response['data']['data'])) {
                 return $instance->makeInstance($response['data']);
             }
 
@@ -180,7 +180,7 @@ abstract class BaseApiModel extends Model
             if ($this->exists) {
                 // Update existing resource
                 $response = $this->patchResource(
-                    endpoint: static::$endpoint.'/'.$this->getKey(),
+                    endpoint: static::$endpoint . '/' . $this->getKey(),
                     data: $this->getDirty()
                 );
             } else {
@@ -252,7 +252,7 @@ abstract class BaseApiModel extends Model
      */
     public function delete()
     {
-        return $this->deleteResource(endpoint: static::$endpoint.'/'.$this->getKey());
+        return $this->deleteResource(endpoint: static::$endpoint . '/' . $this->getKey());
     }
 
     /**
