@@ -34,21 +34,32 @@ jobs:
           coverage: none
           tools: composer:v2
 
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
       - name: Install dependencies
-        run: composer update --prefer-dist --no-suggest --no-progress
+        run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
 
       - name: Run Lint
         run: composer lint
-        continue-on-error: true
 
-      - name: Don't Commit composer.json change
-        run: git checkout -- composer.json
+      - name: Reset composer files
+        if: always()
+        run: |
+          git checkout HEAD -- composer.json composer.lock 2>/dev/null || true
 
-      - name: Don't Commit composer.lock change
-        run: git checkout -- composer.lock
-
-      - name: Commit any changes back to the repo
-        uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Commit lint fixes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        if: github.event_name == 'push'
         with:
-          commit_message: '[GitHub Action: Lint] composer lint'
-          commit_author: github-actions <bot@github.com>
+          commit_message: 'style: apply automated lint fixes'
+          commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
+          file_pattern: '*.php'
