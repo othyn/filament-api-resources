@@ -1,0 +1,51 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint Code
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    env:
+      COMPOSER_NO_INTERACTION: 1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-suggest --no-progress
+
+      - name: Run Lint
+        run: composer lint
+        continue-on-error: true
+
+      - name: Don't Commit composer.json change
+        run: git checkout -- composer.json
+
+      - name: Don't Commit composer.lock change
+        run: git checkout -- composer.lock
+
+      - name: Commit any changes back to the repo
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: '[GitHub Action: Lint] composer lint'
+          commit_author: github-actions <bot@github.com>
