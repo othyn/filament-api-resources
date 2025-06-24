@@ -26,6 +26,13 @@ return [
         'Authorization' => 'Bearer '.env('FILAMENT_API_TOKEN', ''),
         'Accept' => 'application/json',
         'Content-Type' => 'application/json',
+
+        // Should you need to add a header that is dynamic, e.g. load something at runtime after your app is booted,
+        // you can use a closure.
+        // 'X-Custom-Header' => function () {
+        //     return 'Custom-Value';
+        // },
+        // 'X-Custom-Header-2' => fn () => 'Custom-Value-2',
     ],
 
     /*
