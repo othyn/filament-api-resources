@@ -102,28 +102,10 @@ class ApiService
      */
     protected function getHeaders(array $additionalHeaders = []): array
     {
-        $resolvedDefaultHeaders = [];
-        foreach ($this->defaultHeaders as $key => $value) {
-            if ($value instanceof \Closure) {
-                $resolvedDefaultHeaders[$key] = $value();
-            } else {
-                $resolvedDefaultHeaders[$key] = $value;
-            }
-        }
-
-        $resolvedAdditionalHeaders = [];
-        foreach ($additionalHeaders as $key => $value) {
-            if ($value instanceof \Closure) {
-                $resolvedAdditionalHeaders[$key] = $value();
-            } else {
-                $resolvedAdditionalHeaders[$key] = $value;
-            }
-        }
-
         return array_merge([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-        ], $resolvedDefaultHeaders, $resolvedAdditionalHeaders);
+        ], $this->defaultHeaders, $additionalHeaders);
     }
 
     /**
