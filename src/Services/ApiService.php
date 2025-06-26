@@ -139,8 +139,8 @@ class ApiService
             $params[$perPageParam] = $perPage ?? 15;
         }
 
-        if (!empty($params)) {
-            $endpoint .= '?'.http_build_query($params);
+        if (! empty($params)) {
+            $endpoint .= '?' . http_build_query($params);
         }
 
         return $endpoint;
@@ -153,7 +153,7 @@ class ApiService
     {
         $prefix = config('filament-api-resources.cache.prefix', 'filament_api_');
 
-        return $prefix.md5($endpoint);
+        return $prefix . md5($endpoint);
     }
 
     /**
@@ -161,13 +161,13 @@ class ApiService
      */
     protected function logException(\Exception $exception, string $method, string $endpoint, array $data = [], array $headers = [], ?array $responseData = null): void
     {
-        if (!$this->loggingEnabled) {
+        if (! $this->loggingEnabled) {
             return;
         }
 
         $logData = [
             'method' => $method,
-            'endpoint' => $this->baseUrl.$endpoint,
+            'endpoint' => $this->baseUrl . $endpoint,
             'exception' => [
                 'message' => $exception->getMessage(),
                 'code' => $exception->getCode(),
@@ -176,11 +176,11 @@ class ApiService
             ],
         ];
 
-        if ($this->includeRequestData && !empty($data)) {
+        if ($this->includeRequestData && ! empty($data)) {
             $logData['request_data'] = $data;
         }
 
-        if (!empty($headers)) {
+        if (! empty($headers)) {
             $logData['headers'] = $this->getHeaders($headers);
         }
 
@@ -223,9 +223,9 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->get($this->baseUrl.$endpoint);
+                ->get($this->baseUrl . $endpoint);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
@@ -252,9 +252,9 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->post($this->baseUrl.$endpoint, $data);
+                ->post($this->baseUrl . $endpoint, $data);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
@@ -281,9 +281,9 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->patch($this->baseUrl.$endpoint, $data);
+                ->patch($this->baseUrl . $endpoint, $data);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
@@ -310,9 +310,9 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->put($this->baseUrl.$endpoint, $data);
+                ->put($this->baseUrl . $endpoint, $data);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
@@ -339,9 +339,9 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->delete($this->baseUrl.$endpoint, $data);
+                ->delete($this->baseUrl . $endpoint, $data);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
