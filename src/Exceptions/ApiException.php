@@ -7,14 +7,14 @@ namespace Othyn\FilamentApiResources\Exceptions;
 class ApiException extends \Exception
 {
     protected int $statusCode;
-    protected array $responseData;
+    protected string $rawResponseBody;
 
-    public function __construct(string $message, int $statusCode = 0, array $responseData = [], ?\Exception $previous = null)
+    public function __construct(string $message, int $statusCode = 0, string $rawResponseBody = '', ?\Exception $previous = null)
     {
         parent::__construct($message, $statusCode, $previous);
 
         $this->statusCode = $statusCode;
-        $this->responseData = $responseData;
+        $this->rawResponseBody = $rawResponseBody;
     }
 
     public function getStatusCode(): int
@@ -22,9 +22,9 @@ class ApiException extends \Exception
         return $this->statusCode;
     }
 
-    public function getResponseData(): array
+    public function getRawResponseBody(): string
     {
-        return $this->responseData;
+        return $this->rawResponseBody;
     }
 
     public static function fromResponse(int $statusCode, string $responseBody): self
@@ -32,6 +32,6 @@ class ApiException extends \Exception
         $data = json_decode($responseBody, true) ?? [];
         $message = $data['message'] ?? $data['error'] ?? "API request failed with status {$statusCode}";
 
-        return new self($message, $statusCode, $data);
+        return new self($message, $statusCode, $responseBody);
     }
 }

@@ -102,8 +102,8 @@ return [
     */
     'logging' => [
         'enabled' => env('FILAMENT_API_LOGGING_ENABLED', true),
-        'channel' => env('FILAMENT_API_LOGGING_CHANNEL', 'default'), // Laravel log channel
-        'level' => env('FILAMENT_API_LOGGING_LEVEL', 'error'), // Log level for exceptions
+        'channel' => env('FILAMENT_API_LOGGING_CHANNEL', 'default'),
+        'level' => env('FILAMENT_API_LOGGING_LEVEL', 'error'),
         'include_request_data' => env('FILAMENT_API_LOGGING_INCLUDE_REQUEST_DATA', true),
         'include_response_data' => env('FILAMENT_API_LOGGING_INCLUDE_RESPONSE_DATA', false),
     ],

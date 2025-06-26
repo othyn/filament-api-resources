@@ -159,7 +159,7 @@ class ApiService
     /**
      * Log an API exception with configurable details.
      */
-    protected function logException(\Exception $exception, string $method, string $endpoint, array $data = [], array $headers = [], ?array $responseData = null): void
+    protected function logException(\Exception $exception, string $method, string $endpoint, array $data = [], array $headers = [], ?string $rawResponseBody = null): void
     {
         if (! $this->loggingEnabled) {
             return;
@@ -184,8 +184,13 @@ class ApiService
             $logData['headers'] = $this->getHeaders($headers);
         }
 
-        if ($this->includeResponseData && $responseData !== null) {
-            $logData['response_data'] = $responseData;
+        if ($this->includeResponseData) {
+            if ($exception instanceof ApiException) {
+                $logData['raw_response_body'] = $exception->getRawResponseBody();
+                $logData['status_code'] = $exception->getStatusCode();
+            } elseif ($rawResponseBody !== null) {
+                $logData['raw_response_body'] = $rawResponseBody;
+            }
         }
 
         $logger = $this->logChannel === 'default' ? Log::getFacadeRoot() : Log::channel($this->logChannel);
@@ -231,7 +236,7 @@ class ApiService
 
             return $response->json();
         } catch (\Exception $e) {
-            $this->logException($e, 'GET', $endpoint, [], $headers, isset($response) ? $response->json() : null);
+            $this->logException($e, 'GET', $endpoint, [], $headers, isset($response) ? $response->body() : null);
 
             Notification::make()
                 ->title('Failed to fetch data')
@@ -260,7 +265,7 @@ class ApiService
 
             return $response->json();
         } catch (\Exception $e) {
-            $this->logException($e, 'POST', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+            $this->logException($e, 'POST', $endpoint, $data, $headers, isset($response) ? $response->body() : null);
 
             Notification::make()
                 ->title('Failed to create resource')
@@ -289,7 +294,7 @@ class ApiService
 
             return $response->json();
         } catch (\Exception $e) {
-            $this->logException($e, 'PATCH', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+            $this->logException($e, 'PATCH', $endpoint, $data, $headers, isset($response) ? $response->body() : null);
 
             Notification::make()
                 ->title('Failed to update resource')
@@ -318,7 +323,7 @@ class ApiService
 
             return $response->json();
         } catch (\Exception $e) {
-            $this->logException($e, 'PUT', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+            $this->logException($e, 'PUT', $endpoint, $data, $headers, isset($response) ? $response->body() : null);
 
             Notification::make()
                 ->title('Failed to update resource')
@@ -347,7 +352,7 @@ class ApiService
 
             return $response->json();
         } catch (\Exception $e) {
-            $this->logException($e, 'DELETE', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+            $this->logException($e, 'DELETE', $endpoint, $data, $headers, isset($response) ? $response->body() : null);
 
             Notification::make()
                 ->title('Failed to delete resource')
