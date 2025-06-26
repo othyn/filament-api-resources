@@ -91,4 +91,20 @@ return [
         'retry_attempts' => env('FILAMENT_API_RETRY_ATTEMPTS', 3),
         'retry_delay' => env('FILAMENT_API_RETRY_DELAY', 100), // milliseconds
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logging Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure logging behavior for API operations.
+    |
+    */
+    'logging' => [
+        'enabled' => env('FILAMENT_API_LOGGING_ENABLED', true),
+        'channel' => env('FILAMENT_API_LOGGING_CHANNEL', 'default'), // Laravel log channel
+        'level' => env('FILAMENT_API_LOGGING_LEVEL', 'error'), // Log level for exceptions
+        'include_request_data' => env('FILAMENT_API_LOGGING_INCLUDE_REQUEST_DATA', true),
+        'include_response_data' => env('FILAMENT_API_LOGGING_INCLUDE_RESPONSE_DATA', false),
+    ],
 ];

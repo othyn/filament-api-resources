@@ -7,6 +7,7 @@ namespace Othyn\FilamentApiResources\Services;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Othyn\FilamentApiResources\Exceptions\ApiException;
 
 class ApiService
@@ -16,6 +17,11 @@ class ApiService
     protected int $timeout;
     protected int $retryAttempts;
     protected int $retryDelay;
+    protected bool $loggingEnabled;
+    protected string $logChannel;
+    protected string $logLevel;
+    protected bool $includeRequestData;
+    protected bool $includeResponseData;
 
     public function __construct()
     {
@@ -24,6 +30,11 @@ class ApiService
         $this->timeout = config('filament-api-resources.http.timeout', 30);
         $this->retryAttempts = config('filament-api-resources.http.retry_attempts', 3);
         $this->retryDelay = config('filament-api-resources.http.retry_delay', 100);
+        $this->loggingEnabled = config('filament-api-resources.logging.enabled', true);
+        $this->logChannel = config('filament-api-resources.logging.channel', 'default');
+        $this->logLevel = config('filament-api-resources.logging.level', 'error');
+        $this->includeRequestData = config('filament-api-resources.logging.include_request_data', true);
+        $this->includeResponseData = config('filament-api-resources.logging.include_response_data', false);
     }
 
     /**
@@ -128,8 +139,8 @@ class ApiService
             $params[$perPageParam] = $perPage ?? 15;
         }
 
-        if (! empty($params)) {
-            $endpoint .= '?' . http_build_query($params);
+        if (!empty($params)) {
+            $endpoint .= '?'.http_build_query($params);
         }
 
         return $endpoint;
@@ -142,7 +153,44 @@ class ApiService
     {
         $prefix = config('filament-api-resources.cache.prefix', 'filament_api_');
 
-        return $prefix . md5($endpoint);
+        return $prefix.md5($endpoint);
+    }
+
+    /**
+     * Log an API exception with configurable details.
+     */
+    protected function logException(\Exception $exception, string $method, string $endpoint, array $data = [], array $headers = [], ?array $responseData = null): void
+    {
+        if (!$this->loggingEnabled) {
+            return;
+        }
+
+        $logData = [
+            'method' => $method,
+            'endpoint' => $this->baseUrl.$endpoint,
+            'exception' => [
+                'message' => $exception->getMessage(),
+                'code' => $exception->getCode(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ],
+        ];
+
+        if ($this->includeRequestData && !empty($data)) {
+            $logData['request_data'] = $data;
+        }
+
+        if (!empty($headers)) {
+            $logData['headers'] = $this->getHeaders($headers);
+        }
+
+        if ($this->includeResponseData && $responseData !== null) {
+            $logData['response_data'] = $responseData;
+        }
+
+        $logger = $this->logChannel === 'default' ? Log::getFacadeRoot() : Log::channel($this->logChannel);
+
+        $logger->log($this->logLevel, 'API request failed', $logData);
     }
 
     /**
@@ -175,14 +223,16 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->get($this->baseUrl . $endpoint);
+                ->get($this->baseUrl.$endpoint);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
             return $response->json();
         } catch (\Exception $e) {
+            $this->logException($e, 'GET', $endpoint, [], $headers, isset($response) ? $response->json() : null);
+
             Notification::make()
                 ->title('Failed to fetch data')
                 ->body($e->getMessage())
@@ -202,14 +252,16 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->post($this->baseUrl . $endpoint, $data);
+                ->post($this->baseUrl.$endpoint, $data);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
             return $response->json();
         } catch (\Exception $e) {
+            $this->logException($e, 'POST', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+
             Notification::make()
                 ->title('Failed to create resource')
                 ->body($e->getMessage())
@@ -229,14 +281,16 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->patch($this->baseUrl . $endpoint, $data);
+                ->patch($this->baseUrl.$endpoint, $data);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
             return $response->json();
         } catch (\Exception $e) {
+            $this->logException($e, 'PATCH', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+
             Notification::make()
                 ->title('Failed to update resource')
                 ->body($e->getMessage())
@@ -256,14 +310,16 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->put($this->baseUrl . $endpoint, $data);
+                ->put($this->baseUrl.$endpoint, $data);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
             return $response->json();
         } catch (\Exception $e) {
+            $this->logException($e, 'PUT', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+
             Notification::make()
                 ->title('Failed to update resource')
                 ->body($e->getMessage())
@@ -283,14 +339,16 @@ class ApiService
             $response = Http::timeout($this->timeout)
                 ->retry($this->retryAttempts, $this->retryDelay)
                 ->withHeaders($this->getHeaders($headers))
-                ->delete($this->baseUrl . $endpoint, $data);
+                ->delete($this->baseUrl.$endpoint, $data);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
             }
 
             return $response->json();
         } catch (\Exception $e) {
+            $this->logException($e, 'DELETE', $endpoint, $data, $headers, isset($response) ? $response->json() : null);
+
             Notification::make()
                 ->title('Failed to delete resource')
                 ->body($e->getMessage())
