@@ -149,14 +149,15 @@ abstract class BaseApiModel extends Model
     /**
      * Create a new resource via the API.
      */
-    public static function create(array $attributes): ?self
+    public static function create(array $attributes, bool $forceRefreshOnNextFetch = true): ?self
     {
         $instance = new static();
 
         try {
             $response = $instance->postResource(
                 endpoint: static::$endpoint,
-                data: $attributes
+                data: $attributes,
+                forceRefreshOnNextFetch: $forceRefreshOnNextFetch
             );
 
             if (isset($response['data'])) {
@@ -174,20 +175,22 @@ abstract class BaseApiModel extends Model
      *
      * This method handles both creating new resources and updating existing ones.
      */
-    public function save(array $options = []): bool
+    public function save(array $options = [], bool $forceRefreshOnNextFetch = true): bool
     {
         try {
             if ($this->exists) {
                 // Update existing resource
                 $response = $this->patchResource(
                     endpoint: static::$endpoint . '/' . $this->getKey(),
-                    data: $this->getDirty()
+                    data: $this->getDirty(),
+                    forceRefreshOnNextFetch: $forceRefreshOnNextFetch
                 );
             } else {
                 // Create new resource
                 $response = $this->postResource(
                     endpoint: static::$endpoint,
-                    data: $this->getAttributes()
+                    data: $this->getAttributes(),
+                    forceRefreshOnNextFetch: $forceRefreshOnNextFetch
                 );
             }
 
@@ -234,33 +237,33 @@ abstract class BaseApiModel extends Model
     /**
      * Create a resource via the API.
      */
-    protected function postResource(string $endpoint, array $data = []): array
+    protected function postResource(string $endpoint, array $data = [], bool $forceRefreshOnNextFetch = true): array
     {
-        return $this->getApiService()->post($endpoint, $data);
+        return $this->getApiService()->post(endpoint: $endpoint, data: $data, forceRefreshOnNextFetch: $forceRefreshOnNextFetch);
     }
 
     /**
      * Update a resource via the API.
      */
-    protected function patchResource(string $endpoint, array $data = []): array
+    protected function patchResource(string $endpoint, array $data = [], bool $forceRefreshOnNextFetch = true): array
     {
-        return $this->getApiService()->patch($endpoint, $data);
+        return $this->getApiService()->patch(endpoint: $endpoint, data: $data, forceRefreshOnNextFetch: $forceRefreshOnNextFetch);
     }
 
     /**
      * Delete a resource via the API.
      */
-    public function delete()
+    public function delete(bool $forceRefreshOnNextFetch = true)
     {
-        return $this->deleteResource(endpoint: static::$endpoint . '/' . $this->getKey());
+        return $this->deleteResource(endpoint: static::$endpoint . '/' . $this->getKey(), forceRefreshOnNextFetch: $forceRefreshOnNextFetch);
     }
 
     /**
      * Delete a resource from the API.
      */
-    protected function deleteResource(string $endpoint): array
+    protected function deleteResource(string $endpoint, bool $forceRefreshOnNextFetch = true): array
     {
-        return $this->getApiService()->delete($endpoint);
+        return $this->getApiService()->delete(endpoint: $endpoint, forceRefreshOnNextFetch: $forceRefreshOnNextFetch);
     }
 
     /**

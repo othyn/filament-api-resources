@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Othyn\FilamentApiResources\Exceptions\ApiException;
 
 class ApiService
@@ -23,6 +24,11 @@ class ApiService
     protected bool $includeRequestData;
     protected bool $includeResponseData;
 
+    /**
+     * Session key for storing the force cache refresh flag.
+     */
+    protected const FORCE_CACHE_REFRESH_SESSION_KEY = 'filament_api_force_cache_refresh';
+
     public function __construct()
     {
         $this->baseUrl = config('filament-api-resources.base_url', '');
@@ -35,6 +41,34 @@ class ApiService
         $this->logLevel = config('filament-api-resources.logging.level', 'error');
         $this->includeRequestData = config('filament-api-resources.logging.include_request_data', true);
         $this->includeResponseData = config('filament-api-resources.logging.include_response_data', false);
+    }
+
+    /**
+     * Set the session flag to force cache refresh on the next request.
+     */
+    public function setForceRefreshSession(bool $forceRefresh = true): self
+    {
+        Session::put(self::FORCE_CACHE_REFRESH_SESSION_KEY, $forceRefresh);
+
+        return $this;
+    }
+
+    /**
+     * Get the session flag for forcing cache refresh.
+     */
+    public function getForceRefreshSession(): bool
+    {
+        return Session::get(self::FORCE_CACHE_REFRESH_SESSION_KEY, false);
+    }
+
+    /**
+     * Clear the session flag for forcing cache refresh.
+     */
+    public function clearForceRefreshSession(): self
+    {
+        Session::forget(self::FORCE_CACHE_REFRESH_SESSION_KEY);
+
+        return $this;
     }
 
     /**
@@ -188,14 +222,26 @@ class ApiService
         $endpoint = $this->compileEndpoint($endpoint, $params, $currentPage, $perPage);
         $requestKey = $this->getRequestKey($endpoint);
 
+        // Check session flag for force refresh (session flag takes precedence)
+        $shouldForceRefresh = $this->getForceRefreshSession() || $forceCacheRefresh;
+
         // If no caching is requested, fetch directly
         if ($cacheSeconds === null) {
+            // Clear the session flag if it was set, since we're not using cache anyway
+            if ($this->getForceRefreshSession()) {
+                $this->clearForceRefreshSession();
+            }
+
             return $this->rawFetch($endpoint);
         }
 
-        // If force refresh is requested, forget the cache first
-        if ($forceCacheRefresh) {
+        // If force refresh is requested (either via session or parameter), forget the cache first
+        if ($shouldForceRefresh) {
             Cache::forget($requestKey);
+            // Clear the session flag after using it
+            if ($this->getForceRefreshSession()) {
+                $this->clearForceRefreshSession();
+            }
         }
 
         return Cache::remember($requestKey, $cacheSeconds, fn () => $this->rawFetch($endpoint));
@@ -233,7 +279,7 @@ class ApiService
     /**
      * Create a resource in the API.
      */
-    public function post(string $endpoint, array $data = [], array $headers = []): array
+    public function post(string $endpoint, array $data = [], array $headers = [], bool $forceRefreshOnNextFetch = true): array
     {
         try {
             $response = Http::timeout($this->timeout)
@@ -243,6 +289,11 @@ class ApiService
 
             if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
+            }
+
+            // Set session flag to force refresh on next fetch if requested
+            if ($forceRefreshOnNextFetch) {
+                $this->setForceRefreshSession(true);
             }
 
             return $response->json();
@@ -262,7 +313,7 @@ class ApiService
     /**
      * Update a resource in the API.
      */
-    public function patch(string $endpoint, array $data = [], array $headers = []): array
+    public function patch(string $endpoint, array $data = [], array $headers = [], bool $forceRefreshOnNextFetch = true): array
     {
         try {
             $response = Http::timeout($this->timeout)
@@ -272,6 +323,11 @@ class ApiService
 
             if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
+            }
+
+            // Set session flag to force refresh on next fetch if requested
+            if ($forceRefreshOnNextFetch) {
+                $this->setForceRefreshSession(true);
             }
 
             return $response->json();
@@ -291,7 +347,7 @@ class ApiService
     /**
      * Put a resource in the API.
      */
-    public function put(string $endpoint, array $data = [], array $headers = []): array
+    public function put(string $endpoint, array $data = [], array $headers = [], bool $forceRefreshOnNextFetch = true): array
     {
         try {
             $response = Http::timeout($this->timeout)
@@ -301,6 +357,11 @@ class ApiService
 
             if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
+            }
+
+            // Set session flag to force refresh on next fetch if requested
+            if ($forceRefreshOnNextFetch) {
+                $this->setForceRefreshSession(true);
             }
 
             return $response->json();
@@ -320,7 +381,7 @@ class ApiService
     /**
      * Delete a resource from the API.
      */
-    public function delete(string $endpoint, array $data = [], array $headers = []): array
+    public function delete(string $endpoint, array $data = [], array $headers = [], bool $forceRefreshOnNextFetch = true): array
     {
         try {
             $response = Http::timeout($this->timeout)
@@ -330,6 +391,11 @@ class ApiService
 
             if (! $response->successful()) {
                 throw ApiException::fromResponse($response->status(), $response->body());
+            }
+
+            // Set session flag to force refresh on next fetch if requested
+            if ($forceRefreshOnNextFetch) {
+                $this->setForceRefreshSession(true);
             }
 
             return $response->json();
