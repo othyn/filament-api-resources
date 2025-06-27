@@ -287,6 +287,29 @@ These parameter names can be customized in the configuration file:
 
 The package includes built-in error handling for API requests. Failed requests will throw exceptions with detailed error messages. You can catch and handle these in your application as needed.
 
+### Debugging API Requests
+
+When debugging API requests, Laravel's default behavior truncates request exception messages which can make it difficult to see the full API response. To get complete error details, you can disable request truncation in your `bootstrap/app.php` file:
+
+```php
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withExceptions(function (Exceptions $exceptions) {
+        // Disable truncation completely for full error details
+        $exceptions->dontTruncateRequestExceptions();
+
+        // Or set a custom length (default is 100 characters)
+        // $exceptions->truncateRequestExceptionsAt(260);
+    })
+    ->create();
+```
+
+This will ensure you see the complete API response in your logs and error messages, making debugging much easier.
+
 ## Caching
 
 API responses are automatically cached based on your configuration. You can:
