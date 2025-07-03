@@ -2,7 +2,11 @@
 
 A Laravel package that enables Filament to work seamlessly with API-backed resources instead of traditional Eloquent models. This package provides all the necessary components to build Filament admin panels that consume REST APIs. The standard approach is to reach for the superb package known as [Sushi](https://usesushi.dev/), but I've found that a bit limiting when it came to supporting the rest of Filaments feature suite, as well as pagination being an awkward solve. So with that in mind, I created this package.
 
-**Exciting news:** Over the weekend, the new Filament V4 Beta was released with [official support for array drivers](https://filamentphp.com/content/alexandersix-all-about-the-filament-v4-beta-release#static-table-data), allowing API's to be used with tables, search, filtering, etc. so I can't imagine this package will be useful for much longer! Glad to see upstream support for this use case now though, well done to the Filament team as always!
+## Filament V4 Beta
+
+**Exciting news:** Over the weekend, the new Filament V4 Beta was released with official support for ['Tables with custom data'](https://filamentphp.com/content/leandrocfe-filament-v4-beta-feature-overview#tables-with-custom-data), allowing API's to be used with "... supporting features like columns, sorting, searching, pagination, and actions."
+
+I can't imagine this package will be useful for much longer! Glad to see upstream support for this use case, well done to the Filament team as always!
 
 ## Features
 
